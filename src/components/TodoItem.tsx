@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
-export function TodoItem({ todo, onToggle, onDelete, onToggleSubtask, onDeleteSubtask, onUpdateNotes, onAddSubtask, onAddTag, onRemoveTag }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onDelete, onToggleSubtask, onDeleteSubtask, onAddSubtask }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const getPriorityBorderColor = (priority: string) => {
     switch (priority) {
