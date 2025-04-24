@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MoreVertical, Trash, Calendar, Tag } from 'lucide-react';
+import { MoreVertical, Trash, Calendar, Tag, ChevronDown, ChevronUp, ListTodo, FileText, Link } from 'lucide-react';
 import { format, isAfter } from 'date-fns';
 import { TodoItemProps } from '@/types/todo';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,7 +16,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
-export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onDelete, onToggleSubtask, onDeleteSubtask, onUpdateNotes, onAddSubtask, onAddTag, onRemoveTag }: TodoItemProps) {
+  const [expanded, setExpanded] = useState(false);
   const getPriorityBorderColor = (priority: string) => {
     switch (priority) {
       case 'high':
@@ -60,41 +62,114 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
       whileHover={{ scale: 1.02 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
     >
-      <div className="flex items-center gap-3 flex-grow">
-        <Checkbox
-          checked={todo.completed}
-          onCheckedChange={() => onToggle(todo.id)}
-          className="data-[state=checked]:bg-primary"
-        />
-        <div className="flex flex-col gap-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-sm font-medium truncate ${todo.completed ? 'line-through text-muted-foreground' : ''}`}
-            >
-              {todo.title}
-            </span>
-            <Badge variant="outline" className={getPriorityBadgeColor(todo.priority)}>
-              {todo.priority}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Created {format(todo.createdAt, 'PPp')}</span>
-            {todo.dueDate && (
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span className={isOverdue(todo.dueDate) ? 'text-destructive' : ''}>
-                  Due {format(todo.dueDate, 'PPp')}
-                </span>
-              </div>
-            )}
-            {todo.category && (
-              <div className="flex items-center gap-1">
-                <Tag className="h-3 w-3" />
-                <span>{todo.category}</span>
-              </div>
-            )}
+      <div className="flex flex-col gap-3 flex-grow">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+          <Checkbox
+            checked={todo.completed}
+            onCheckedChange={() => onToggle(todo.id)}
+            className="data-[state=checked]:bg-primary"
+          />
+          <div className="flex flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className={`text-sm font-medium ${todo.completed ? 'line-through text-muted-foreground' : ''}`}
+              >
+                {todo.title}
+              </span>
+              <Badge variant="outline" className={getPriorityBadgeColor(todo.priority)}>
+                {todo.priority}
+              </Badge>
+              {todo.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  #{tag}
+                </Badge>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+              <span>Created {format(todo.createdAt, 'PPp')}</span>
+              {todo.dueDate && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span className={isOverdue(todo.dueDate) ? 'text-destructive' : ''}>
+                    Due {format(todo.dueDate, 'PPp')}
+                  </span>
+                </div>
+              )}
+              {todo.category && (
+                <div className="flex items-center gap-1">
+                  <Tag className="h-3 w-3" />
+                  <span>{todo.category}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {expanded && (
+          <div className="pl-12 space-y-3">
+            {todo.notes && (
+              <div className="flex items-start gap-2 text-sm">
+                <FileText className="h-4 w-4 mt-1 text-muted-foreground" />
+                <p className="text-muted-foreground whitespace-pre-wrap">{todo.notes}</p>
+              </div>
+            )}
+
+            {todo.dependencies.length > 0 && (
+              <div className="flex items-start gap-2">
+                <Link className="h-4 w-4 mt-1 text-muted-foreground" />
+                <div className="text-sm text-muted-foreground">
+                  Dependencies: {todo.dependencies.join(', ')}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <ListTodo className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Subtasks</span>
+              </div>
+              {todo.subtasks.map((subtask) => (
+                <div key={subtask.id} className="flex items-center gap-2 pl-6">
+                  <Checkbox
+                    checked={subtask.completed}
+                    onCheckedChange={() => onToggleSubtask?.(todo.id, subtask.id)}
+                    className="data-[state=checked]:bg-primary"
+                  />
+                  <span className={`text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}>
+                    {subtask.title}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 ml-auto"
+                    onClick={() => onDeleteSubtask?.(todo.id, subtask.id)}
+                  >
+                    <Trash className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  const title = prompt('Enter subtask title');
+                  if (title) onAddSubtask?.(todo.id, title);
+                }}
+              >
+                Add Subtask
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <DropdownMenu>

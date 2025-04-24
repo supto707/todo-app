@@ -9,13 +9,32 @@ import { AddTodoDialog } from '@/components/AddTodoDialog';
 import { Priority } from '@/types/todo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Tags } from 'lucide-react';
 
 export function TodoList() {
-  const { todos, addTodo, toggleTodo, deleteTodo, sortBy, setSortBy, filterBy, setFilterBy } = useTodo();
+  const { 
+    todos, 
+    addTodo, 
+    toggleTodo, 
+    deleteTodo, 
+    sortBy, 
+    setSortBy, 
+    filterBy, 
+    setFilterBy,
+    addSubtask,
+    toggleSubtask,
+    deleteSubtask,
+    updateNotes,
+    addTag,
+    removeTag
+  } = useTodo();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const completedTodos = todos.filter((todo) => todo.completed).length;
   const categories = Array.from(new Set(todos.map(todo => todo.category).filter(Boolean)));
+  const allTags = Array.from(new Set(todos.flatMap(todo => todo.tags)));
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-8">
@@ -29,6 +48,18 @@ export function TodoList() {
       <TodoProgress completed={completedTodos} total={todos.length} />
 
       <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex-1 min-w-[300px]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search todos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
         <Select defaultValue={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Sort by" />
@@ -76,6 +107,30 @@ export function TodoList() {
           </Select>
         )}
 
+        {allTags.length > 0 && (
+          <Select
+            value={filterBy.tags?.[0] || "all"}
+            onValueChange={(value: string) => 
+              setFilterBy({ ...filterBy, tags: value === "all" ? undefined : [value] })
+            }
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tags</SelectItem>
+              {allTags.map((tag) => (
+                <SelectItem key={tag} value={tag}>
+                  <div className="flex items-center gap-2">
+                    <Tags className="h-4 w-4" />
+                    #{tag}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         <Button
           variant="outline"
           onClick={() => setFilterBy({ ...filterBy, completed: !filterBy.completed })}
@@ -91,7 +146,27 @@ export function TodoList() {
         layout
       >
         <AnimatePresence mode="popLayout">
-          {todos.length === 0 ? (
+          {todos
+            .filter(todo => 
+              todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              todo.notes?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              todo.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+            )
+            .map((todo) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                onToggle={toggleTodo}
+                onDelete={deleteTodo}
+                onToggleSubtask={toggleSubtask}
+                onDeleteSubtask={deleteSubtask}
+                onUpdateNotes={updateNotes}
+                onAddSubtask={addSubtask}
+                onAddTag={addTag}
+                onRemoveTag={removeTag}
+              />
+            ))}
+          {todos.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -100,15 +175,6 @@ export function TodoList() {
             >
               <p>No todos yet. Add one to get started!</p>
             </motion.div>
-          ) : (
-            todos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={toggleTodo}
-                onDelete={deleteTodo}
-              />
-            ))
           )}
         </AnimatePresence>
       </motion.div>
