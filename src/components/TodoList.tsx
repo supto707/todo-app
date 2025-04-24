@@ -70,7 +70,7 @@ export function TodoList() {
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
+                <SelectItem key={category || ''} value={category || ''}>{category || ''}</SelectItem>
               ))}
             </SelectContent>
           </Select>

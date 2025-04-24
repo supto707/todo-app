@@ -36,7 +36,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   };
 
   const filteredAndSortedTodos = useMemo(() => {
-    let filtered = todos.filter((todo) => {
+    const filtered = todos.filter((todo) => {
       if (filterBy.priority && todo.priority !== filterBy.priority) return false;
       if (filterBy.category && todo.category !== filterBy.category) return false;
       if (filterBy.completed !== undefined && todo.completed !== filterBy.completed) return false;

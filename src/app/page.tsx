@@ -1,6 +1,6 @@
 'use client';
 
-import Image from "next/image";
+// import Image from "next/image";
 import { TodoProvider } from '@/contexts/TodoContext';
 import { TodoList } from '@/components/TodoList';
 import { Toaster } from 'sonner';
